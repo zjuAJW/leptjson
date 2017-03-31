@@ -1,0 +1,5 @@
+﻿  leptjson.cpp
+e:\c++\leptjson\leptjson\leptjson.cpp(73): warning C4018: “<”: 有符号/无符号不匹配
+e:\c++\leptjson\leptjson\leptjson.cpp(76): warning C4018: “<”: 有符号/无符号不匹配
+  leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.exe
+  leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.pdb (Partial PDB)
