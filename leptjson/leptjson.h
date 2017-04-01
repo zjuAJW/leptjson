@@ -18,8 +18,9 @@ namespace leptjson {
 	public:
 		LeptValue(lept_type _type) :type(_type) {}
 		lept_type lept_get_type();
-		double letp_get_num();
+		double lept_get_number();
 		lept_type type;
+		double number;
 	};
 
 	class LeptJson {
@@ -30,7 +31,6 @@ namespace leptjson {
 		}
 		std::string context;
 		std::string::iterator pos;
-
 	};
 
 	class LeptJsonParser{
@@ -39,20 +39,21 @@ namespace leptjson {
 			LEPT_PARSE_OK = 0,
 			LEPT_PARSE_EXPECT_VALUE,
 			LEPT_PARSE_INVALID_VALUE,
-			LEPT_PARSE_ROOT_NOT_SINGULAR
+			LEPT_PARSE_ROOT_NOT_SINGULAR,
+			LEPT_PARSE_NUMBER_TOO_BIG
 		} parse_status;
 
 		LeptJsonParser(const std::string&);
-		parse_status lept_parse(LeptValue* v);
 		static parse_status lept_parse(const std::string & json,LeptValue* v);
 	private:
 		const std::string json;
 		std::string::const_iterator key;
 		static void lept_parse_whitespace(LeptJson &json);
 		static parse_status lept_parse_value(LeptJson &json,LeptValue *);
-		static parse_status lept_parse_null(LeptJson &json,LeptValue *);
-		static parse_status lept_parse_false(LeptJson &json,LeptValue *);
-		static parse_status lept_parse_true(LeptJson &json,LeptValue *);
+		//static parse_status lept_parse_null(LeptJson &json,LeptValue *);
+		//static parse_status lept_parse_false(LeptJson &json,LeptValue *);
+		//static parse_status lept_parse_true(LeptJson &json,LeptValue *);
+		static parse_status lept_parse_number(LeptJson &json, LeptValue *);
 		static parse_status lept_parse_literal(LeptJson &json, LeptValue *v, const std::string& literal, lept_type type);
 	};
 
