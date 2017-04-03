@@ -59,6 +59,8 @@ namespace leptjson {
 			return lept_parse_literal(json, v, "null", LEPT_NULL);
 		case 't':
 			return lept_parse_literal(json, v, "true", LEPT_TRUE);
+		case '\"':
+			return lept_parse_string(json, v);
 		case 'f':
 			return lept_parse_literal(json, v, "false", LEPT_FALSE);
 		default:
@@ -140,5 +142,23 @@ namespace leptjson {
 		return LEPT_PARSE_OK;
 	}
 
-	
+	LeptJsonParser::parse_status LeptJsonParser::lept_parse_string(LeptJson &json, LeptValue *v) {
+		EXPECT(json.pos, '\"');
+		auto start = json.pos;
+		while (json.remain_length() > 0 && *json.pos!= '\"') {
+			++json.pos;
+		}
+		if (json.remain_length() <= 0 && json.pos!=start)
+			return LEPT_PARSE_INVALID_VALUE;
+		else if(json.pos!=start){
+			*v = string(start,json.pos);
+			++json.pos;
+			return LEPT_PARSE_OK;
+		}
+		else {
+			*v = string("");
+			++json.pos;
+			return LEPT_PARSE_OK;
+		}
+	}
 }

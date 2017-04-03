@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include "leptjson.h"
@@ -20,6 +21,7 @@ static int test_pass = 0;
 
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
+#define EXPECT_EQ_STRING(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%s")
 
 #define TEST_ERROR(error, json)\
 	do{\
@@ -34,6 +36,15 @@ static int test_pass = 0;
 		EXPECT_EQ_INT(LeptJsonParser::LEPT_PARSE_OK,LeptJsonParser::lept_parse(json,&v));\
 		EXPECT_EQ_INT(LEPT_NUMBER,v.type);\
 		EXPECT_EQ_DOUBLE(expect, v.number);\
+	}while(0)
+
+#define TEST_STRING(expect, json)\
+	do{\
+		LeptValue v(LEPT_FALSE);\
+		EXPECT_EQ_INT(LeptJsonParser::LEPT_PARSE_OK,LeptJsonParser::lept_parse(json,&v));\
+		EXPECT_EQ_INT(LEPT_STRING,v.type);\
+		EXPECT_EQ_STRING(expect, v.str);\
+		v.~v();\
 	}while(0)
 
 using namespace leptjson;
@@ -133,15 +144,23 @@ static void test_parse_number_too_big() {
 #endif
 }
 
+static void test_parse_string() {
+	//TEST_STRING("", "\"\"");
+	//TEST_STRING("Hello", "\"Hello\"");
+	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+	TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+}
+
 static void test_parse() {
-	test_parse_null();
-	test_parse_true();
-	test_parse_false();
-	test_parse_number();
-	test_parse_expect_value();
-	test_parse_invalid_value();
-	test_parse_root_not_singular();
-	test_parse_number_too_big();
+	//test_parse_null();
+	//test_parse_true();
+	//test_parse_false();
+	//test_parse_number();
+	//test_parse_expect_value();
+	//test_parse_invalid_value();
+	//test_parse_root_not_singular();
+	//test_parse_number_too_big();
+	test_parse_string();
 	/* ... */
 }
 
@@ -151,4 +170,6 @@ int main() {
 	test_parse();
 	printf("%d/%d (%3.2f%%) passed\n", test_pass, test_count, test_pass * 100.0 / test_count);
 	return main_ret;
+	//std::string s("Hello\nWorld");
+	//std::cout << s << std::endl;
 }

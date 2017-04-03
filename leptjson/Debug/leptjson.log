@@ -1,3 +1,5 @@
 ﻿  test.cpp
+e:\c++\leptjson\leptjson\test.cpp(150): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
+e:\c++\leptjson\leptjson\test.cpp(151): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
   leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.exe
   leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.pdb (Partial PDB)
