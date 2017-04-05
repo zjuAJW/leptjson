@@ -2,6 +2,8 @@
 #define LEPTJSON_H_
 
 #include <string>
+#include <stack>
+#include <vector>
 
 namespace leptjson {
 	typedef enum {
@@ -16,11 +18,78 @@ namespace leptjson {
 
 	class LeptValue {
 	public:
-		LeptValue(lept_type _type) :type(_type) {}
+		~LeptValue() { if (type == LEPT_STRING) str.~str(); }
+		LeptValue(lept_type _type) :type(_type),number(0){}
+
+
+		LeptValue(const LeptValue & rhs) : type(rhs.type) {
+			switch (rhs.type) {
+			case LEPT_NUMBER:
+				number = rhs.number;
+				break;
+			case LEPT_STRING:
+				new(&str) std::string(rhs.str);
+				break;
+			case LEPT_ARRAY:
+				new(&array) std::vector<LeptValue>(rhs.array);
+				break;
+			}
+		}
+
+		LeptValue& operator=(const LeptValue & rhs){
+			switch (rhs.type) {
+			case LEPT_NUMBER:
+				number = rhs.number;
+				break;
+			case LEPT_STRING:
+				str = rhs.str;
+				break;
+			case LEPT_ARRAY:
+				array = rhs.array;
+				break;
+			}
+			return *this;
+		}
+
 		lept_type lept_get_type();
 		double lept_get_number();
+		LeptValue* lept_get_array_element(size_t n);
+		union {
+			double number;
+			std::string str;
+			std::vector<LeptValue> array;
+		};
+
+		LeptValue& operator=(double d) {
+			if (type == LEPT_STRING) str.~str();
+			type = LEPT_NUMBER;
+			number = d;
+			return *this;
+		}
+
+		LeptValue& operator=(std::string s) {
+			if (type == LEPT_STRING)
+				str = s;
+			else if (type == LEPT_ARRAY) {
+				array.~array();
+				new (&str) std::string(s);
+			}else
+				new (&str) std::string(s);
+			type = LEPT_STRING;
+			return *this;
+		}
+
+		LeptValue& operator=(std::vector<LeptValue> arr) {
+			if (type == LEPT_ARRAY)
+				array = arr;
+			else if (type == LEPT_STRING) {
+				str.~str();
+				new(&arr) std::vector<LeptValue>(arr);
+			}else
+				new(&arr) std::vector<LeptValue>(arr);
+		}
+
 		lept_type type;
-		double number;
 	};
 
 	class LeptJson {
@@ -31,6 +100,9 @@ namespace leptjson {
 		}
 		std::string context;
 		std::string::iterator pos;
+
+		std::stack<LeptValue> value_stack;
+
 	};
 
 	class LeptJsonParser{
@@ -40,7 +112,13 @@ namespace leptjson {
 			LEPT_PARSE_EXPECT_VALUE,
 			LEPT_PARSE_INVALID_VALUE,
 			LEPT_PARSE_ROOT_NOT_SINGULAR,
-			LEPT_PARSE_NUMBER_TOO_BIG
+			LEPT_PARSE_NUMBER_TOO_BIG,
+			LEPT_PARSE_INVALID_STRING_ESCAPE,
+			LEPT_PARSE_MISS_QUOTATION_MARK,
+			LEPT_PARSE_INVALID_STRING_CHAR,
+			LEPT_PARSE_INVALID_UNICODE_HEX,
+			LEPT_PARSE_INVALID_UNICODE_SURROGATE,
+			LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET
 		} parse_status;
 
 		LeptJsonParser(const std::string&);
@@ -48,6 +126,9 @@ namespace leptjson {
 	private:
 		const std::string json;
 		std::string::const_iterator key;
+
+		static int lept_parse_hex(LeptJson &json,unsigned *u);
+		static void lept_encode_utf8(std::string& str, unsigned u);
 		static void lept_parse_whitespace(LeptJson &json);
 		static parse_status lept_parse_value(LeptJson &json,LeptValue *);
 		//static parse_status lept_parse_null(LeptJson &json,LeptValue *);
@@ -55,6 +136,8 @@ namespace leptjson {
 		//static parse_status lept_parse_true(LeptJson &json,LeptValue *);
 		static parse_status lept_parse_number(LeptJson &json, LeptValue *);
 		static parse_status lept_parse_literal(LeptJson &json, LeptValue *v, const std::string& literal, lept_type type);
+		static parse_status lept_parse_string(LeptJson &json, LeptValue *v);
+		static parse_status lept_parse_array(LeptJson &json, LeptValue *v);
 	};
 
 
