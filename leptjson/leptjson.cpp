@@ -32,8 +32,20 @@ namespace leptjson {
 
 	LeptValue * LeptValue::lept_get_array_element(size_t n){
 		assert(type == LEPT_ARRAY);
-		assert(0 < n < array.size());
-		return &array[n];
+		assert(0 < n < arr.size());
+		return &arr[n];
+	}
+
+	std::string LeptValue::lept_get_object_key(size_t n) {
+		assert(type == LEPT_OBJECT);
+		assert(n < obj.size());
+		return obj[n].key;
+	}
+
+	LeptValue * LeptValue::lept_get_object_value(size_t n) {
+		assert(type == LEPT_OBJECT);
+		assert(n < obj.size());
+		return &obj[n].value;
 	}
 
 	LeptJsonParser::LeptJsonParser(const string& _json) :json(_json),key(json.begin()) {}
@@ -78,6 +90,8 @@ namespace leptjson {
 			return lept_parse_literal(json, v, "false", LEPT_FALSE);
 		case '[':
 			return lept_parse_array(json, v);
+		case '{':
+			return lept_parse_object(json, v);
 		default:
 			return lept_parse_number(json,v);
 		}
@@ -132,11 +146,11 @@ namespace leptjson {
 			if (json.remain_length() <= 0 || !is_digit(*json.pos)) return LEPT_PARSE_INVALID_VALUE;
 			while (json.remain_length() > 0 && is_digit(*json.pos)) ++json.pos;
 		}
-
 		errno = 0;
-		*v = strtod(string(start,json.pos).c_str(), NULL);
+		double result = strtod(string(start,json.pos).c_str(), NULL);
 		if (errno == ERANGE && (v->number == HUGE_VAL || v->number == -HUGE_VAL))
 			return LEPT_PARSE_NUMBER_TOO_BIG;
+		*v = result;
 		v->type = LEPT_NUMBER;
 		return LEPT_PARSE_OK;
 	}
@@ -158,10 +172,9 @@ namespace leptjson {
 		return LEPT_PARSE_OK;
 	}
 
-	LeptJsonParser::parse_status LeptJsonParser::lept_parse_string(LeptJson &json, LeptValue *v) {
+	LeptJsonParser::parse_status LeptJsonParser::lept_parse_string_raw(LeptJson &json, string &_str) {
 		EXPECT(json.pos, '\"');
 		unsigned u, u2;
-		string _str("");
 		while (1) {
 			if (json.remain_length() <= 0) {
 				return LEPT_PARSE_MISS_QUOTATION_MARK;
@@ -169,20 +182,19 @@ namespace leptjson {
 			switch (*json.pos) {
 			case '\"':
 				++json.pos;
-				*v = _str;
 				return LEPT_PARSE_OK;
 			case '\\':
 				if (json.remain_length() > 0) ++json.pos;
 				else { return LEPT_PARSE_MISS_QUOTATION_MARK; }
 				switch (*json.pos) {
-				case '\"': _str += "\""; break;
-				case '\\': _str += "\\"; break;
-				case '/':  _str += "/"; break;
-				case 'b':  _str += "\b"; break;
-				case 'f':  _str += "\f"; break;
-				case 'n':  _str += "\n"; break;
-				case 'r':  _str += "\r"; break;
-				case 't':  _str += "\t"; break;
+				case '\"': _str += "\""; ++json.pos; break;
+				case '\\': _str += "\\"; ++json.pos; break;
+				case '/':  _str += "/"; ++json.pos; break;
+				case 'b':  _str += "\b"; ++json.pos; break;
+				case 'f':  _str += "\f"; ++json.pos; break;
+				case 'n':  _str += "\n"; ++json.pos; break;
+				case 'r':  _str += "\r"; ++json.pos; break;
+				case 't':  _str += "\t"; ++json.pos; break;
 				case 'u':
 					++json.pos;
 					if (!lept_parse_hex(json, &u))
@@ -200,7 +212,7 @@ namespace leptjson {
 						u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
 						json.pos += 4;
 					}
-					lept_encode_utf8(_str,u);
+					lept_encode_utf8(_str, u);
 					break;
 				default:
 					return LEPT_PARSE_INVALID_STRING_ESCAPE;
@@ -213,8 +225,16 @@ namespace leptjson {
 				_str += *json.pos;
 				++json.pos;
 			}
-			
 		}
+	}
+
+	LeptJsonParser::parse_status LeptJsonParser::lept_parse_string(LeptJson &json, LeptValue *v) {
+		string _str("");
+		parse_status ret;
+		if ((ret = lept_parse_string_raw(json, _str)) == LEPT_PARSE_OK) {
+			*v = _str;
+		}
+		return ret;
 	}
 
 	int LeptJsonParser::lept_parse_hex(LeptJson &json,unsigned *u) {
@@ -257,7 +277,7 @@ namespace leptjson {
 		lept_parse_whitespace(json);
 		parse_status ret;
 		v->type = LEPT_ARRAY;
-		new(&v->array) std::vector<LeptValue>;
+		new(&v->arr) std::vector<LeptValue>;
 		if (*json.pos == ']') {
 			++json.pos;
 			return LEPT_PARSE_OK;
@@ -269,14 +289,105 @@ namespace leptjson {
 			auto element = new LeptValue(LEPT_NULL);
 			if ((ret = lept_parse_value(json,element))!=LEPT_PARSE_OK)
 				return ret;
-			v->array.push_back(*element);
+			v->arr.push_back(*element);
 			lept_parse_whitespace(json);
 			if (*json.pos == ',') ++json.pos;
 			else if (*json.pos == ']') {
-				++json.pos; 
+				++json.pos;
 				return LEPT_PARSE_OK;
 			}else
 				return LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
 		}
+	}
+
+	LeptJsonParser::parse_status LeptJsonParser::lept_parse_object(LeptJson &json, LeptValue *v) {
+		EXPECT(json.pos, '{');
+		parse_status ret;
+		std::vector<LeptMember> result;
+		while (1) {
+			string key("");
+			LeptValue value(LEPT_NULL);
+			lept_parse_whitespace(json);
+			if (json.remain_length() <= 0) {
+				return LEPT_PARSE_MISS_COMMA_OR_CURLY_BRACKET;
+			}
+			if (*json.pos == '}') {
+				*v = result;
+				++json.pos;
+				return LEPT_PARSE_OK;
+			}
+			if (*json.pos != '\"')
+				return LEPT_PARSE_MISS_KEY;
+			if ((ret = lept_parse_string_raw(json, key)) != LEPT_PARSE_OK)
+				return ret;
+			lept_parse_whitespace(json);
+			if (json.remain_length() <= 0 || *json.pos != ':')
+				return LEPT_PARSE_INVALID_VALUE;
+			++json.pos;
+			lept_parse_whitespace(json);
+			if ((ret = lept_parse_value(json, &value)) != LEPT_PARSE_OK)
+				return ret;
+			LeptMember m(key, value);
+			result.push_back(m);
+			lept_parse_whitespace(json);
+			if (json.remain_length() >0 && *json.pos == ',') ++json.pos;
+		}
+	}
+
+	LeptJsonStringifier::stringify_status LeptJsonStringifier::lept_stringify(LeptValue *v, std::string& json) {
+		assert(v != NULL);
+		json = "";
+		stringify_status ret;
+		ret = lept_stringify_value(v, json);
+		return ret;
+	}
+
+	LeptJsonStringifier::stringify_status LeptJsonStringifier::lept_stringify_value(LeptValue  *v, std::string & json) {
+		assert(v != NULL);
+		stringify_status ret;
+		switch (v->type) {
+		case LEPT_NULL:
+			json += "null"; break;
+		case LEPT_FALSE:
+			json += "false"; break;
+		case LEPT_TRUE:
+			json += "true"; break;
+		case LEPT_NUMBER:
+			char buffer[32];
+			sprintf(buffer, "%.17g", v->number);
+			json += string(buffer);
+			break;
+		case LEPT_STRING:
+			json += "\"";
+			json += v->str;
+			json += "\"";
+			break;
+		case LEPT_ARRAY:
+			json += "[";
+			for (auto element : v->arr) {
+				if ((ret = lept_stringify_value(&element, json)) != LEPT_STRINGIFY_OK)
+					return ret;
+				json += ",";
+			}
+			json.pop_back();
+			json += "]";
+			break;
+		case LEPT_OBJECT:
+			json += "{";
+			for (auto element : v->obj) {
+				json += "\"";
+				json += element.key;
+				json += "\":";
+				if ((ret = lept_stringify_value(&element.value, json)) != LEPT_STRINGIFY_OK)
+					return ret;
+				json += ",";
+			}
+			json.pop_back();
+			json += "}";
+			break;
+		default:
+			return LEPT_STRINGIFY_INVALID_TYPE;
+		}
+		return LEPT_STRINGIFY_OK;
 	}
 }

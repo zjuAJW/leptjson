@@ -5,6 +5,7 @@
 #include <stack>
 #include <vector>
 
+
 namespace leptjson {
 	typedef enum {
 		LEPT_NULL,
@@ -15,12 +16,13 @@ namespace leptjson {
 		LEPT_ARRAY,
 		LEPT_OBJECT
 	} lept_type;
+	class LeptMember;
 
 	class LeptValue {
 	public:
 		~LeptValue() { if (type == LEPT_STRING) str.~str(); }
-		LeptValue(lept_type _type) :type(_type),number(0){}
 
+		LeptValue(lept_type _type) :type(_type),number(0){}
 
 		LeptValue(const LeptValue & rhs) : type(rhs.type) {
 			switch (rhs.type) {
@@ -31,11 +33,15 @@ namespace leptjson {
 				new(&str) std::string(rhs.str);
 				break;
 			case LEPT_ARRAY:
-				new(&array) std::vector<LeptValue>(rhs.array);
+				new(&arr) std::vector<LeptValue>(rhs.arr);
+				break;
+			case LEPT_OBJECT:
+				new(&obj) std::vector<LeptMember>(rhs.obj);
 				break;
 			}
 		}
 
+		//TODO: 拷贝赋值运算符是有问题的，虽然在程序里没有用到
 		LeptValue& operator=(const LeptValue & rhs){
 			switch (rhs.type) {
 			case LEPT_NUMBER:
@@ -45,7 +51,7 @@ namespace leptjson {
 				str = rhs.str;
 				break;
 			case LEPT_ARRAY:
-				array = rhs.array;
+				arr = rhs.arr;
 				break;
 			}
 			return *this;
@@ -54,10 +60,13 @@ namespace leptjson {
 		lept_type lept_get_type();
 		double lept_get_number();
 		LeptValue* lept_get_array_element(size_t n);
+		std::string lept_get_object_key(size_t n);
+		LeptValue * lept_get_object_value(size_t n);
 		union {
 			double number;
 			std::string str;
-			std::vector<LeptValue> array;
+			std::vector<LeptValue> arr;
+			std::vector<LeptMember> obj;
 		};
 
 		LeptValue& operator=(double d) {
@@ -67,29 +76,56 @@ namespace leptjson {
 			return *this;
 		}
 
-		LeptValue& operator=(std::string s) {
+		LeptValue& operator=(const std::string& s) {
 			if (type == LEPT_STRING)
 				str = s;
-			else if (type == LEPT_ARRAY) {
-				array.~array();
+			else {
+				if (type == LEPT_ARRAY)
+					arr.~arr();
+				if (type == LEPT_OBJECT)
+					obj.~obj();
 				new (&str) std::string(s);
-			}else
-				new (&str) std::string(s);
+			}
 			type = LEPT_STRING;
 			return *this;
 		}
 
-		LeptValue& operator=(std::vector<LeptValue> arr) {
+		LeptValue& operator=(std::vector<LeptValue>& _arr) {
 			if (type == LEPT_ARRAY)
-				array = arr;
-			else if (type == LEPT_STRING) {
-				str.~str();
-				new(&arr) std::vector<LeptValue>(arr);
-			}else
-				new(&arr) std::vector<LeptValue>(arr);
+				arr = _arr;
+			else {
+				if (type == LEPT_STRING)
+					str.~str();
+				if (type == LEPT_OBJECT)
+					obj.~obj();
+				new (&arr) std::vector<LeptValue>(_arr);
+			}
+			type = LEPT_ARRAY;
+			return *this;
+		}
+
+		LeptValue& operator=(std::vector<LeptMember>& _obj) {
+			if (type == LEPT_OBJECT)
+				obj = _obj;
+			else {
+				if (type == LEPT_STRING)
+					str.~str();
+				if (type == LEPT_ARRAY)
+					arr.~arr();
+				new (&obj) std::vector<LeptMember>(_obj);
+			}
+			type = LEPT_OBJECT;
+			return *this;
 		}
 
 		lept_type type;
+	};
+
+	class LeptMember {
+	public:
+		LeptMember(const std::string &_key, const LeptValue &_value) :key(_key), value(_value) {}
+		std::string key;
+		LeptValue value;
 	};
 
 	class LeptJson {
@@ -118,7 +154,10 @@ namespace leptjson {
 			LEPT_PARSE_INVALID_STRING_CHAR,
 			LEPT_PARSE_INVALID_UNICODE_HEX,
 			LEPT_PARSE_INVALID_UNICODE_SURROGATE,
-			LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET
+			LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET,
+			LEPT_PARSE_MISS_KEY,
+			LEPT_PARSE_MISS_COLON,
+			LEPT_PARSE_MISS_COMMA_OR_CURLY_BRACKET
 		} parse_status;
 
 		LeptJsonParser(const std::string&);
@@ -136,21 +175,27 @@ namespace leptjson {
 		//static parse_status lept_parse_true(LeptJson &json,LeptValue *);
 		static parse_status lept_parse_number(LeptJson &json, LeptValue *);
 		static parse_status lept_parse_literal(LeptJson &json, LeptValue *v, const std::string& literal, lept_type type);
+		static parse_status lept_parse_string_raw(LeptJson &json, std::string &str);
 		static parse_status lept_parse_string(LeptJson &json, LeptValue *v);
 		static parse_status lept_parse_array(LeptJson &json, LeptValue *v);
+		static parse_status lept_parse_object(LeptJson &json, LeptValue *v);
+
+	};
+
+	class LeptJsonStringifier {
+	public:
+		typedef enum {
+			LEPT_STRINGIFY_OK = 0,
+			LEPT_STRINGIFY_INVALID_TYPE
+		} stringify_status;
+
+		static stringify_status lept_stringify(LeptValue *v,std::string& json);
+	private:
+		static stringify_status lept_stringify_value(LeptValue  *v,std::string & json);
 	};
 
 
 
 }
-
-
-
-
-
-
-
-
-
 
 #endif
