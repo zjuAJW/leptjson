@@ -2,9 +2,13 @@
 #define LEPTJSON_H_
 
 #include <string>
-#include <stack>
 #include <vector>
+#include <map>
+#include <assert.h>
 
+inline void EXPECT(std::string::iterator& key, char ch) { assert(*key == (ch)); key++; }
+inline int is_digit(char ch) { return ch >= '0' && ch <= '9'; }
+inline int is_digit19(char ch) { return ch >= '1' && ch <= '9'; }
 
 namespace leptjson {
 	typedef enum {
@@ -16,11 +20,27 @@ namespace leptjson {
 		LEPT_ARRAY,
 		LEPT_OBJECT
 	} lept_type;
+
 	class LeptMember;
 
 	class LeptValue {
 	public:
-		~LeptValue() { if (type == LEPT_STRING) str.~str(); }
+		union {
+			double number;
+			std::string str;
+			std::vector<LeptValue> arr;
+			std::vector<LeptMember> obj;
+			//std::multimap<std::string, LeptValue> obj;
+		};
+
+		~LeptValue() { 
+			if (type == LEPT_STRING)
+				str.~str();
+			else if (type == LEPT_ARRAY)
+				arr.~arr();
+			else if (type == LEPT_OBJECT)
+				obj.~obj();
+		}
 
 		LeptValue(lept_type _type) :type(_type),number(0){}
 
@@ -57,19 +77,16 @@ namespace leptjson {
 			return *this;
 		}
 
+		//一些函数，用来获取成员的值
 		lept_type lept_get_type();
 		double lept_get_number();
 		LeptValue* lept_get_array_element(size_t n);
 		std::string lept_get_object_key(size_t n);
 		LeptValue * lept_get_object_value(size_t n);
-		union {
-			double number;
-			std::string str;
-			std::vector<LeptValue> arr;
-			std::vector<LeptMember> obj;
-		};
 
-		LeptValue& operator=(double d) {
+
+
+		LeptValue& operator=(const double d) {
 			if (type == LEPT_STRING) str.~str();
 			type = LEPT_NUMBER;
 			number = d;
@@ -136,9 +153,6 @@ namespace leptjson {
 		}
 		std::string context;
 		std::string::iterator pos;
-
-		std::stack<LeptValue> value_stack;
-
 	};
 
 	class LeptJsonParser{
@@ -192,6 +206,7 @@ namespace leptjson {
 		static stringify_status lept_stringify(LeptValue *v,std::string& json);
 	private:
 		static stringify_status lept_stringify_value(LeptValue  *v,std::string & json);
+		static stringify_status lept_stringify_string(LeptValue *v, std::string& json);
 	};
 
 
