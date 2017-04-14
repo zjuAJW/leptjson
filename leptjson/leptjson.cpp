@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "leptjson.h"
 #include <iostream>
+#include <cerrno>
 
 #ifdef _WINDOWS
 #define _CRTDBG_MAP_ALLOC
@@ -34,7 +35,7 @@ namespace leptjson {
 	std::string LeptValue::lept_get_object_key(size_t n) {
 		assert(type == LEPT_OBJECT);
 		assert(n < obj.size());
-		return obj.begin[n].key;
+		return obj[n].key;
 	}
 
 	LeptValue * LeptValue::lept_get_object_value(size_t n) {
@@ -143,7 +144,7 @@ namespace leptjson {
 		}
 		errno = 0;
 		double result = strtod(string(start, json.pos).c_str(), NULL);
-		if (errno == ERANGE && (v->number == HUGE_VAL || v->number == -HUGE_VAL))
+		if (errno == ERANGE)
 			return LEPT_PARSE_NUMBER_TOO_BIG;
 		*v = result;
 		v->type = LEPT_NUMBER;

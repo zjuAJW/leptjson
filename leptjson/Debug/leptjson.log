@@ -1,24 +1,11 @@
-﻿  test.cpp
-e:\c++\leptjson\leptjson\test.cpp(154): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(155): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(156): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(157): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(158): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(159): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(160): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(161): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(162): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(224): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(263): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(265): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(267): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(269): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(272): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(274): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(275): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(283): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(333): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 3 拥有了类型“const std::string”
-e:\c++\leptjson\leptjson\test.cpp(333): warning C4477: “fprintf”: 格式字符串“%s”需要类型“char *”的参数，但可变参数 4 拥有了类型“std::string”
-e:\c++\leptjson\leptjson\test.cpp(330): warning C4101: “length”: 未引用的局部变量
+﻿  leptjson.cpp
+e:\c++\leptjson\leptjson\leptjson.cpp(31): warning C4804: “<”: 在操作中使用类型“bool”不安全
+e:\c++\leptjson\leptjson\leptjson.cpp(31): warning C4018: “<”: 有符号/无符号不匹配
+e:\c++\leptjson\leptjson\leptjson.cpp(161): warning C4018: “<”: 有符号/无符号不匹配
+e:\c++\leptjson\leptjson\leptjson.cpp(165): warning C4018: “<”: 有符号/无符号不匹配
+e:\c++\leptjson\leptjson\leptjson.cpp(359): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.14393.0\ucrt\stdio.h(1769): note: 参见“sprintf”的声明
+e:\c++\leptjson\leptjson\leptjson.cpp(413): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.14393.0\ucrt\stdio.h(1769): note: 参见“sprintf”的声明
   leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.exe
   leptjson.vcxproj -> E:\C++\leptjson\Debug\leptjson.pdb (Partial PDB)
